@@ -2,6 +2,10 @@ from src.config import LLM_CLIENT, LLM_MODEL
 from src.prompts.system_prompts import SYSTEM_PROMPT 
 from .memory import GLOBAL_MEMORY
 from .router import classify_user_intent 
+from src.tools.scam_check import get_domain_age 
+from src.tools.text_analysis import analyze_text
+from src.rag.retriever import get_context
+from src.prompts.templates import RISK_VERDICT_TEMPLATE
 
 # Lista de unelte (tools) disponibile Agentului.
 AVAILABLE_TOOLS = [] 
@@ -26,26 +30,35 @@ def run_scam_analyzer(user_input: str) -> str:
         final_response = ""
         
         if intent == "LINK_ANALYSIS":
-            # Optiunea 1: Necesita o unealta (tool) pentru verificare externa
-            # TODO: Aici se va integra logica de Tool Calling reală
-            final_response = (
-                f"Detected intent: **{intent}**. Running URL security check..."
+            domain_result = get_domain_age(user_input)
+            interpretation_prompt = (
+                f"Analyze the following raw domain verification result. "
+                f"Formulate a concise security verdict based on the provided data. "
+                f"Raw tool result: {domain_result}"
             )
             
         elif intent == "GENERAL_KNOWLEDGE":
-            final_response = LLM_CLIENT.chat.completions.create(
-                model=LLM_MODEL,
-                messages=messages_to_send,
-            ).choices[0].message.content
+            rag_context = get_context(user_input)
+            if rag_context and "RAG ERROR" not in rag_context:
+                rag_instruction = f"Use the following internal context fragments (RAG) to answer the user's query: "
+                messages_to_send[-1]['content'] += f"\n\n{rag_instruction}\n{rag_context}"
             
         else:
-            final_response = LLM_CLIENT.chat.completions.create(
-                model=LLM_MODEL,
-                messages=messages_to_send,
-            ).choices[0].message.content
+            analysis_result_dict = analyze_text(user_input)
+            scoring_prompt = (
+                f"Utilize this raw risk score and the dangerous keywords found to generate a final security verdict. "
+                f"STRICTLY adhere to the format: \n\n{RISK_VERDICT_TEMPLATE}\n\n"
+                f"Raw scoring data: {analysis_result_dict}"
+            )
+            messages_to_send[-1]['content'] = scoring_prompt
 
-        GLOBAL_MEMORY.add_message("assistant", final_response)
+        response = LLM_CLIENT.chat.completions.create(
+            model=LLM_MODEL,
+            messages=messages_to_send,
+        ).choices[0].message.content
         
+        final_response = response
+        GLOBAL_MEMORY.add_message("assistant", final_response)
         return final_response
 
     except Exception as e:
