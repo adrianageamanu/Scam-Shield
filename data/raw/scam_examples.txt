@@ -1,0 +1,14 @@
+SCAM PATTERN: URGENT BANK ALERT
+Subject: ACTION REQUIRED - Your account is locked
+Body: Dear Customer, we detected unauthorized access attempts. For your security, your account is temporarily suspended. Click here [LINK] to verify your identity within 24 hours or your funds will be frozen.
+Indicators: Urgency, Suspended Account, Link to verify.
+
+SCAM PATTERN: THE ROMANCE SCAM / PIG BUTCHERING
+Context: Stranger on WhatsApp/Instagram.
+Script: "Hello, I think I have the wrong number but you look kind. I am [Name], a fashion designer/investor from [City]. Do you invest in crypto? I can teach you how to make 20% weekly returns."
+Indicators: Flattery, Wrong number excuse, Crypto investment promise, moving conversation to WhatsApp.
+
+SCAM PATTERN: CEO FRAUD / BUSINESS EMAIL COMPROMISE
+Subject: Urgent Transfer Request
+Body: "I am in a meeting and cannot talk. I need you to process a wire transfer to this vendor immediately. It is for the acquisition we discussed. Please handle this discreetly and right now."
+Indicators: Impersonating Boss, Secrecy, Urgency, Wire Transfer.

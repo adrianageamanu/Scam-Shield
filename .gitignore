@@ -1,0 +1,29 @@
+# --- 🔒 SECURITY (CRITICAL) ---
+.env
+.env.local
+secrets.txt
+
+# --- 🐍 Python System Files (Junk) ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- 📦 Virtual Environments ---
+venv/
+env/
+.venv/
+
+# --- 🧠 RAG & Database (Don't push heavy data!) ---
+# We generate the vector DB locally; it shouldn't go to GitHub.
+data/vector_store/
+chroma_db/
+*.sqlite3
+
+# --- 💻 Editor Settings (Optional) ---
+.vscode/
+.idea/
+
+# --- 🍎 Mac/Windows Junk ---
+.DS_Store
+Thumbs.db.env
