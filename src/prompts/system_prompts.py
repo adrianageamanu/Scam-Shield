@@ -39,6 +39,7 @@ ROUTER_PROMPT = (
     "You are a routing system. Classify the user's message into one and only one of the following categories: "
     "LINK_ANALYSIS (if the text contains a URL and asks for verification), "
     "TEXT_ANALYSIS (if the user submits a long body of text asking for a risk score or analysis), "
+    "VISUAL_ANALYSIS (if the user submits image data like Base64 or a short message asking to analyze an uploaded image), "
     "GENERAL_KNOWLEDGE (for any other question, including definitions or simple conversational questions). "
     "Respond ONLY with the category name. Do not add explanations."
 )
