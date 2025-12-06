@@ -43,7 +43,7 @@ def run_scam_analyzer(user_input: str) -> str:
                 rag_instruction = f"Use the following internal context fragments (RAG) to answer the user's query: "
                 messages_to_send[-1]['content'] += f"\n\n{rag_instruction}\n{rag_context}"
             
-        else:
+        elif intent == "TEXT_ANALYSIS":
             analysis_result_dict = analyze_text(user_input)
             scoring_prompt = (
                 f"Utilize this raw risk score and the dangerous keywords found to generate a final security verdict. "
@@ -51,6 +51,9 @@ def run_scam_analyzer(user_input: str) -> str:
                 f"Raw scoring data: {analysis_result_dict}"
             )
             messages_to_send[-1]['content'] = scoring_prompt
+        
+        else:
+            pass
 
         response = LLM_CLIENT.chat.completions.create(
             model=LLM_MODEL,
