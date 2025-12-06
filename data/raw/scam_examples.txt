@@ -1,14 +1,131 @@
-SCAM PATTERN: URGENT BANK ALERT
-Subject: ACTION REQUIRED - Your account is locked
-Body: Dear Customer, we detected unauthorized access attempts. For your security, your account is temporarily suspended. Click here [LINK] to verify your identity within 24 hours or your funds will be frozen.
-Indicators: Urgency, Suspended Account, Link to verify.
+================================================================================
+CATEGORY: FINANCIAL & BANKING SCAMS (HIGH RISK)
+================================================================================
 
-SCAM PATTERN: THE ROMANCE SCAM / PIG BUTCHERING
-Context: Stranger on WhatsApp/Instagram.
-Script: "Hello, I think I have the wrong number but you look kind. I am [Name], a fashion designer/investor from [City]. Do you invest in crypto? I can teach you how to make 20% weekly returns."
-Indicators: Flattery, Wrong number excuse, Crypto investment promise, moving conversation to WhatsApp.
+SCENARIO: FAKE ACCOUNT FREEZE (Classic Phishing)
+Input Type: SMS / Short Text
+Content: "Banca Transilvania: Contul dvs. a fost restrictionat temporar. Pentru deblocare accesati: http://bit.ly/bt-secure-login in urmatoarele 24h."
+Why Scam:
+- Urgency ("restrictionat temporar", "24h").
+- Shortened link (bit.ly) instead of bancatransilvania.ro.
+- Generic threat.
 
-SCAM PATTERN: CEO FRAUD / BUSINESS EMAIL COMPROMISE
-Subject: Urgent Transfer Request
-Body: "I am in a meeting and cannot talk. I need you to process a wire transfer to this vendor immediately. It is for the acquisition we discussed. Please handle this discreetly and right now."
-Indicators: Impersonating Boss, Secrecy, Urgency, Wire Transfer.
+SCENARIO: FAKE SENDER BANKING
+Input Type: Email Header
+Content:
+From: "ING Suport" <ing-romania-support@gmail.com>
+Subject: Actualizare Date Personale
+Body: Stimate client, conform noilor norme BNR trebuie sa va actualizati datele.
+Why Scam:
+- Sender uses @gmail.com. Legit banks ONLY use @ing.ro.
+- Banks never ask for data updates via email links.
+
+SCENARIO: CRYPTO INVESTMENT (Pig Butchering)
+Input Type: Chat / WhatsApp
+Content: "Hello, sorry to bother. I saw your number in my contacts. I am a crypto analyst from Hong Kong. Do you know about the new ETH upgrade? I can help you make 20% profit weekly."
+Why Scam:
+- Stranger contacting you.
+- Promise of unrealistic returns (20% weekly).
+- Trying to move conversation to WhatsApp/Telegram.
+
+================================================================================
+CATEGORY: DELIVERY & POSTAL SCAMS (HIGH RISK)
+================================================================================
+
+SCENARIO: FAKE CUSTOMS TAX (Smishing)
+Input Type: SMS
+Content: "Posta Romana: Pachetul dvs. este retinut la vama. Taxa restanta: 4.99 RON. Achitati aici: http://posta-romana-taxe.com/pay"
+Why Scam:
+- Small amount requested to steal credit card info.
+- Suspicious link (dash in domain).
+- Unexpected fee.
+
+SCENARIO: FAKE COURIER SENDER
+Input Type: Metadata
+Content: Sender: +40722000111 (Private Mobile Number)
+Message: "Coletul dvs nu a putut fi livrat."
+Why Scam: Official couriers (FanCourier, Sameday, DPD) use Alphanumeric Sender IDs (names), not private mobile numbers for automated alerts.
+
+================================================================================
+CATEGORY: EMPLOYMENT & "EASY MONEY" (HIGH RISK)
+================================================================================
+
+SCENARIO: TIKTOK/YOUTUBE LIKES JOB
+Input Type: WhatsApp / Telegram Message
+Content: "Hi! We are hiring part-time staff. Earn 200-800 RON daily just by liking TikTok videos. Payment is instant via USDT. Contact manager: @telegram_boss."
+Why Scam:
+- Salary is too high for the effort (unrealistic).
+- Payment in Crypto (USDT).
+- Moving strictly to Telegram.
+
+SCENARIO: CEO FRAUD (The "Boss" Scam)
+Input Type: Email Body
+Content: "I am in a board meeting and can't talk. I need you to process an urgent wire transfer to this supplier immediately. Keep it confidential. I will explain later."
+Why Scam:
+- Impersonating authority (CEO).
+- Demanding Secrecy ("Keep it confidential").
+- Creating panic/urgency ("Immediately").
+
+================================================================================
+CATEGORY: SAFE PATTERNS (DO NOT FLAG THESE)
+================================================================================
+
+SCENARIO: LEGIT MARKETING (Electric Castle / Festivals)
+Input Type: Newsletter
+Content:
+From: Electric Castle <news@ecfestival.com>
+Body: "Our X-MAS Packs are LIVE! Get your tickets secured for €10. Buy now before prices go up. Unsubscribe here."
+Why Safe:
+- Sender domain matches the brand (@ecfestival.com).
+- "Buy now" is marketing hype, not a security threat.
+- Contains valid "Unsubscribe" link.
+
+SCENARIO: LEGIT HR RECRUITMENT
+Input Type: Email
+Content: "Salut! Mulțumim pentru aplicare. Te rugăm să rezolvi task-ul tehnic. Ai link-ul de Google Drive aici: https://drive.google.com/folder/... Deadline: Luni."
+Why Safe:
+- Context is established (replying to an application).
+- Google Drive is a standard tool for sharing work files.
+- Deadline is for a task, not for "locking money".
+
+SCENARIO: LEGIT 2FA CODE (Transactional)
+Input Type: SMS
+Content: "Google: 123456 is your verification code. Don't share it with anyone."
+Why Safe:
+- Short code sender.
+- Purely informational.
+- Explicitly warns user to be safe.
+
+SCENARIO: FRIENDLY CHAT (False Positive)
+Input Type: Text Message
+Content: "Hey! The weather is super nice today. Do you want to go grab a beer later? I can pay for the Uber."
+Why Safe:
+- "Pay for Uber" is a generous offer between friends, not a financial scam request.
+- Casual tone.
+- No links, no crypto mentions.
+
+SCENARIO: LEGIT BANK NOTIFICATION
+Input Type: Push Notification / SMS
+Content: "Raiffeisen: Plata de 50 RON la Mega Image a fost autorizata. Sold disponibil: 500 RON."
+Why Safe:
+- Confirmation of past action.
+- No link to click.
+- No call to action ("Click here or die").
+
+================================================================================
+CATEGORY: TECHNICAL SUPPORT (GRAY AREA)
+================================================================================
+
+SCENARIO: FAKE VIRUS ALERT (Tech Support Scam)
+Input Type: Browser Popup Text
+Content: "MICROSOFT WARNING! Your PC is infected with Trojan_Zeus. Call +1-800-123-4567 immediately to block the hacker."
+Why Scam:
+- Microsoft NEVER asks you to call a phone number via pop-up.
+- Fear mongering ("Trojan").
+
+SCENARIO: REAL PASSWORD RESET
+Input Type: Email
+Content: "Did you request a password reset? If yes, click here. If not, ignore this email."
+Why Safe:
+- Only safe if the USER requested it just now.
+- Provides an option to "Ignore".

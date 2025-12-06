@@ -1,13 +1,31 @@
 import whois
 from urllib.parse import urlparse
 from datetime import datetime
+import tldextract
+import re
 
-def get_domain_age(url: str):
+def get_domain_age(text_input: str):
     #extragem domain-ul
-    domain = urlparse(url).netloc
-    if (domain == ""):
-        domain = url
+    domain = ""
+
+    url_pattern = r'(?:https?://)?(?:www\.)?[\w-]+\.\w+(?:\.\w+)*'
+
+    if " " in text_input:
+        found_urls = re.findall(url_pattern, text_input)
+        if found_urls:
+            for canditate in found_urls:
+                if "." in canditate and len(canditate) > 4:
+                    domain = canditate
+                    break
+    if not domain:
+        domain = text_input.strip()
     
+    extracted = tldextract.extract(domain)
+
+    if extracted.domain and extracted.suffix:
+        domain = f"{extracted.domain}.{extracted.suffix}"
+    else:
+        return "SKIP: No valid domain found in the text to analyze."
     #verificam informatiile domain-ului
     try:
         domain_info = whois.whois(domain)
