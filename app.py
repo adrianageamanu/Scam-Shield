@@ -1,6 +1,7 @@
 import streamlit as st
 import time
-import re  # <--- IMPORT NOU: Biblioteca pentru căutare avansată (Regex)
+import re
+import uuid  # <--- IMPORT NOU: Pentru ID-uri unice de chat
 
 # --- IMPORTURILE DIN BACKEND ---
 try:
@@ -28,73 +29,114 @@ st.markdown("""
     .stChatMessage[data-testid="stChatMessageAvatarUser"] {
         background-color: #2b313e;
     }
-    /* Stiluri Badge */
-    .risk-badge-high {
-        background-color: #ff4b4b; /* Rosu */
-        color: white;
-        padding: 4px 12px;
-        border-radius: 16px;
-        font-weight: bold;
-    }
-    .risk-badge-safe {
-        background-color: #00cc66; /* Verde */
-        color: white;
-        padding: 4px 12px;
-        border-radius: 16px;
-        font-weight: bold;
-    }
-    .risk-badge-medium {
-        background-color: #ffcc00; /* Galben */
-        color: #1e1e1e;
-        padding: 4px 12px;
-        border-radius: 16px;
-        font-weight: bold;
-    }
+    .risk-badge-high { background-color: #ff4b4b; color: white; padding: 4px 12px; border-radius: 16px; font-weight: bold; }
+    .risk-badge-safe { background-color: #00cc66; color: white; padding: 4px 12px; border-radius: 16px; font-weight: bold; }
+    .risk-badge-medium { background-color: #ffcc00; color: #1e1e1e; padding: 4px 12px; border-radius: 16px; font-weight: bold; }
+    
+    /* Stil pentru butoanele din sidebar */
+    .chat-btn { width: 100%; text-align: left; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 2. SIDEBAR ---
+# --- 2. GESTIONAREA STĂRII (MULTIPLE CHATS) ---
+
+# Funcție pentru a crea un chat nou
+def create_new_chat():
+    new_id = str(uuid.uuid4())
+    st.session_state.all_chats[new_id] = [
+        {"role": "assistant", "content": "Hello! I am **Sentinel**. 🛡️\n\nPaste any suspicious text, link, or email content here."}
+    ]
+    st.session_state.chat_titles[new_id] = "New Chat"
+    st.session_state.active_chat_id = new_id
+
+# Funcție pentru a șterge chat-ul curent
+def delete_current_chat():
+    current_id = st.session_state.active_chat_id
+    if current_id in st.session_state.all_chats:
+        del st.session_state.all_chats[current_id]
+        del st.session_state.chat_titles[current_id]
+    
+    # Dacă mai există chat-uri, selectăm ultimul, altfel creăm unul nou
+    if st.session_state.all_chats:
+        st.session_state.active_chat_id = list(st.session_state.all_chats.keys())[0]
+    else:
+        create_new_chat()
+
+# Inițializare stări globale
+if "all_chats" not in st.session_state:
+    st.session_state.all_chats = {}
+if "chat_titles" not in st.session_state:
+    st.session_state.chat_titles = {}
+if "active_chat_id" not in st.session_state:
+    create_new_chat() # Creăm primul chat default
+
+# Selectăm chat-ul activ
+active_chat_id = st.session_state.active_chat_id
+current_messages = st.session_state.all_chats[active_chat_id]
+
+# --- 3. SIDEBAR (ISTORIC & CONTROL) ---
 with st.sidebar:
     st.title("🛡️ Sentinel Control")
-    st.success("🟢 System Online")
     st.markdown("Connected to **Sentinel Core**.")
     
-    if st.button("🗑️ Clear History", type="primary"):
-        st.session_state.messages = []
+    # Buton mare de "New Chat"
+    if st.button("➕ New Analysis", type="primary", use_container_width=True):
+        create_new_chat()
         st.rerun()
-    
-    st.divider()
-    st.caption("Powered by OpenAI GPT-4o & LangChain")
 
-# --- 3. INITIALIZARE AGENT ---
+    st.divider()
+    st.markdown("### 🗂️ Recent Scans")
+
+    # Listăm toate chat-urile ca butoane
+    # Folosim reversed() ca să apară cele mai noi sus
+    for chat_id in reversed(list(st.session_state.all_chats.keys())):
+        title = st.session_state.chat_titles.get(chat_id, "New Chat")
+        
+        # Dacă este chat-ul activ, îl evidențiem
+        if chat_id == active_chat_id:
+            if st.button(f"📂 {title}", key=chat_id, use_container_width=True, type="secondary"):
+                pass # E deja selectat
+        else:
+            if st.button(f"📄 {title}", key=chat_id, use_container_width=True):
+                st.session_state.active_chat_id = chat_id
+                st.rerun()
+
+    st.divider()
+    
+    # Buton de Ștergere pentru chat-ul ACTIV
+    if st.button("🗑️ Delete Current Chat", type="primary"):
+        delete_current_chat()
+        st.rerun()
+
+# --- 4. INITIALIZARE AGENT ---
 if "agent_initialized" not in st.session_state and BACKEND_LOADED:
     with st.spinner("Booting up AI Sentinel Core..."):
         initialize_agent()
     st.session_state.agent_initialized = True
 
-# Inițializăm istoricul
-if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "assistant", "content": "Hello! I am **Sentinel**. 🛡️\n\nPaste any suspicious text, link, or email content here."}
-    ]
-
-# --- 4. AFIȘARE ISTORIC ---
-for msg in st.session_state.messages:
+# --- 5. AFIȘARE ISTORIC (Din chat-ul curent) ---
+for msg in current_messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"], unsafe_allow_html=True)
 
-# --- 5. LOGICA PRINCIPALĂ ---
+# --- 6. LOGICA PRINCIPALĂ (CHAT) ---
 if prompt := st.chat_input("Paste suspicious text here..."):
     
-    # 5.1. Afișăm User Input
+    # A. Actualizăm titlul chat-ului dacă e primul mesaj
+    if len(current_messages) == 1: # Doar mesajul de bun venit
+        # Luăm primele 4 cuvinte din mesajul user-ului ca titlu
+        short_title = " ".join(prompt.split()[:4]) + "..."
+        st.session_state.chat_titles[active_chat_id] = short_title
+
+    # B. Afișăm User Input
     with st.chat_message("user"):
         st.markdown(prompt)
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    
+    # C. Salvăm în Chat-ul ACTIV
+    st.session_state.all_chats[active_chat_id].append({"role": "user", "content": prompt})
 
-    # 5.2. Procesare Backend
+    # D. Procesare Backend
     with st.chat_message("assistant"):
-        
-        # A. Status
         with st.status("Sentinel is analyzing...", expanded=True) as status:
             st.write("⚙️ Classifying intent...")
             if BACKEND_LOADED:
@@ -106,44 +148,30 @@ if prompt := st.chat_input("Paste suspicious text here..."):
                 full_response_text = "Backend not loaded."
             status.update(label="Analysis Complete!", state="complete", expanded=False)
 
-        # B. Determinarea Culorii cu REGEX (Soluția Supremă)
+        # Logica Regex pentru Culori
         header_html = ""
-        text_for_search = full_response_text.lower() # Doar lowercase, fara replace-uri complicate
+        text_for_search = full_response_text.lower()
         
-        # EXPLICATIE REGEX:
-        # r"verdict"  -> Cauta cuvantul verdict
-        # .* -> Orice caractere intre ele (spatii, doua puncte, stelute)
-        # (high|...)  -> Unul dintre cuvintele tinta
-        
-        # 1. Cautam HIGH / CRITICAL
         if re.search(r"verdict.*(?:high|critical|scam|phishing|dangerous)", text_for_search):
             header_html = '## <span class="risk-badge-high">⚠️ HIGH RISK DETECTED</span>'
-        
-        # 2. Cautam SAFE / LOW
         elif re.search(r"verdict.*(?:safe|low|legit)", text_for_search):
             header_html = '## <span class="risk-badge-safe">✅ SAFE</span>'
-        
-        # 3. Cautam MEDIUM
         elif re.search(r"verdict.*(?:medium|suspicious)", text_for_search):
             header_html = '## <span class="risk-badge-medium">⚠️ SUSPICIOUS / MEDIUM RISK</span>'
-            
-        else:
-            # Daca nu gasim cuvantul "Verdict", nu afisam badge (e doar chat)
-            pass
 
-        # C. Afișare
         if header_html:
             st.markdown(header_html, unsafe_allow_html=True)
         
-        # D. Streaming
         def stream_data():
-            # split(' ') e important ca sa pastram Enter-urile (\n)
             for word in full_response_text.split(" "):
                 yield word + " "
                 time.sleep(0.015) 
 
         st.write_stream(stream_data)
 
-    # 5.3. Salvare
+    # E. Salvare Răspuns în Chat-ul ACTIV
     combined_response = f"{header_html}\n\n{full_response_text}"
-    st.session_state.messages.append({"role": "assistant", "content": combined_response})
+    st.session_state.all_chats[active_chat_id].append({"role": "assistant", "content": combined_response})
+    
+    # Forțăm refresh la sidebar ca să se actualizeze titlul
+    st.rerun()
