@@ -3,7 +3,7 @@ from src.prompts.system_prompts import ROUTER_PROMPT
 
 def classify_user_intent(user_input: str) -> str:
     
-    VALID_INTENTS = ["LINK_ANALYSIS", "TEXT_ANALYSIS", "WEB_SEARCH", "GENERAL_KNOWLEDGE"]
+    VALID_INTENTS = ["LINK_ANALYSIS", "TEXT_ANALYSIS", "GENERAL_KNOWLEDGE", "VISUAL_ANALYSIS", "WEB_SEARCH"]
     
     messages_to_send = [
         {"role": "system", "content": ROUTER_PROMPT},

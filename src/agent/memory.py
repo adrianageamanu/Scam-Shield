@@ -24,5 +24,11 @@ class AgentMemory:
             self.history = [self.history[0]]
         else:
             self.history = []
+    
+    def get_system_prompt(self):
+        """Returnează doar conținutul promptului de sistem (dacă există)."""
+        if self.history and self.history[0]["role"] == "system":
+            return self.history[0]["content"]
+        return "" # Returnează string gol dacă nu există prompt de sistem
 
 GLOBAL_MEMORY = AgentMemory(max_history=12)

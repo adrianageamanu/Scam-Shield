@@ -76,6 +76,7 @@ ROUTER_PROMPT = (
     "You are a routing system. Classify the user's message into one and only one of the following categories: "
     "LINK_ANALYSIS (if the text contains a URL/Domain asking for verification, OR if the user explicitly asks to analyze a link/domain from the previous conversation context e.g., 'check the link', 'verify the domain'), "
     "TEXT_ANALYSIS (if the user submits a long body of text asking for a risk score or analysis), "
+    "VISUAL_ANALYSIS (if the user submits image data like Base64 or a short message asking to analyze an uploaded image), "
     "WEB_SEARCH (if the user asks about a specific known scam, viral hoax, phone number reputation, or entity validity that requires external fact-checking e.g., 'is Teresa Fidalgo real?', 'is 0744... a scammer?'), "
     "GENERAL_KNOWLEDGE (for any other question, including definitions or simple conversational questions). "
     "Respond ONLY with the category name. Do not add explanations."

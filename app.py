@@ -1,7 +1,10 @@
 import streamlit as st
 import time
-import re
-import uuid  # <--- IMPORT NOU: Pentru ID-uri unice de chat
+import re  # <--- IMPORT NOU: Biblioteca pentru căutare avansată (Regex)
+import base64
+from PIL import Image # NOU
+import io # NOU
+import uuid
 
 # --- IMPORTURILE DIN BACKEND ---
 try:
@@ -119,7 +122,70 @@ for msg in current_messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"], unsafe_allow_html=True)
 
-# --- 6. LOGICA PRINCIPALĂ (CHAT) ---
+if 'image_is_new' not in st.session_state:
+    st.session_state['image_is_new'] = False
+if 'last_image_name' not in st.session_state:
+    st.session_state['last_image_name'] = None
+
+uploaded_file = st.file_uploader("🖼️ Încarcă imaginea (pentru analiza AI/Deepfake):", 
+                                 type=["png", "jpg", "jpeg"], 
+                                 key="image_uploader")
+
+if uploaded_file is not None and uploaded_file.name != st.session_state.get('last_image_name'):
+    st.session_state['image_is_new'] = True
+
+if uploaded_file is not None and BACKEND_LOADED and st.session_state['image_is_new']:
+    
+    image_bytes = uploaded_file.read()
+    
+    try:
+        original_image = Image.open(io.BytesIO(image_bytes))
+        max_size = 1024 
+        original_image.thumbnail((max_size, max_size))
+        
+        buffer = io.BytesIO()
+        original_image.save(buffer, format="JPEG", quality=75)
+        
+        base64_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
+        
+    except Exception as e:
+        st.error(f"Eroare la redimensionare: {e}. Asigură-te că imaginea este validă.")
+        st.session_state['image_is_new'] = False
+        st.rerun() 
+        base64_image = None
+        
+    if base64_image:
+        special_agent_prompt = f"Analizează vizual Base64: {base64_image}" 
+        
+        user_message_content = f"Imaginea **{uploaded_file.name}** a fost încărcată pentru analiză."
+        st.session_state.messages.append({"role": "user", "content": user_message_content})
+        
+        with st.chat_message("user"):
+            st.markdown(user_message_content)
+            # Afișăm imaginea compresată pentru UX
+            st.image(original_image, caption=uploaded_file.name, width=250)
+            
+        # 4. Procesare Agent
+        with st.chat_message("assistant"):
+            with st.spinner("Analiză Multimodală în curs..."):
+                try:
+                    full_response_text = run_scam_analyzer(special_agent_prompt)
+                except Exception as e:
+                    # Dacă LLM-ul dă eroare, o prindem aici
+                    full_response_text = f"❌ Eroare Agent LLM: Analiza a eșuat. {e}"
+            
+            # 5. Afișare răspuns și salvare
+            # (Aici trebuie să incluzi și logica ta de Regex pentru badge-uri)
+            st.markdown(full_response_text)
+            st.session_state.messages.append({"role": "assistant", "content": full_response_text})
+            
+        # 6. CURĂȚAREA STĂRII: Oprește bucla și marchează ca procesat
+        st.session_state['image_is_new'] = False
+        st.session_state['last_image_name'] = uploaded_file.name
+        
+        # Forțează reîncărcarea finală pentru a actualiza corect UI-ul
+        st.rerun()
+
 if prompt := st.chat_input("Paste suspicious text here..."):
     
     # A. Actualizăm titlul chat-ului dacă e primul mesaj
