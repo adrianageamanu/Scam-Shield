@@ -115,8 +115,12 @@ def run_scam_analyzer(user_input: str) -> str:
             elif intent == "WEB_SEARCH":
                 search_result = searching(user_input)
                 prompt = (
-                    f"\n\n[SYSTEM REPORT]: Web search results: {search_result}\n"
-                    f"INSTRUCTION: Determine if this is a known scam/hoax based on search results."
+                    f"\n\n[SYSTEM REPORT]: Web search results for '{user_input}':\n{search_result}\n"
+                    f"INSTRUCTION: The user is fact-checking a potential scam.\n"
+                    f"1. IF the search confirms it is a SCAM/HOAX -> VERDICT: HIGH RISK.\n"
+                    f"2. IF the search confirms it is LEGIT -> VERDICT: SAFE.\n"
+                    f"3. IF unsure -> VERDICT: MEDIUM.\n"
+                    f"Use the STRICT VERDICT format."
                 )
                 messages_to_send[-1]['content'] += prompt
 
