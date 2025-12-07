@@ -6,7 +6,6 @@ from PIL import Image
 import io
 import uuid
 
-# --- IMPORTURILE DIN BACKEND ---
 try:
     from src.agent.core import run_scam_analyzer, initialize_agent
     BACKEND_LOADED = True
@@ -14,10 +13,8 @@ except ImportError as e:
     st.error(f"Critical Error: Could not import backend. Details: {e}")
     BACKEND_LOADED = False
 
-# --- 1. CONFIGURARE PAGINĂ ---
 st.set_page_config(
-    page_title="Sentinel AI - Public Defender",
-    page_icon="🛡️",
+    page_title="Scam Shield AI",
     layout="centered"
 )
 
@@ -41,12 +38,11 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 2. GESTIONAREA STĂRII (MULTIPLE CHATS) ---
 
 def create_new_chat():
     new_id = str(uuid.uuid4())
     st.session_state.all_chats[new_id] = [
-        {"role": "assistant", "content": "Hello! I am **Sentinel**. 🛡️\n\nPaste any suspicious text, link, or upload an image."}
+        {"role": "assistant", "content": "Hello! I am **Scam Shield**. \n\nPaste any suspicious text, link, or upload an image."}
     ]
     st.session_state.chat_titles[new_id] = "New Chat"
     st.session_state.active_chat_id = new_id
@@ -62,7 +58,6 @@ def delete_current_chat():
     else:
         create_new_chat()
 
-# Inițializare stări globale
 if "all_chats" not in st.session_state:
     st.session_state.all_chats = {}
 if "chat_titles" not in st.session_state:
@@ -73,17 +68,16 @@ if "active_chat_id" not in st.session_state:
 active_chat_id = st.session_state.active_chat_id
 current_messages = st.session_state.all_chats[active_chat_id]
 
-# --- 3. SIDEBAR ---
 with st.sidebar:
-    st.title("🛡️ Sentinel Control")
-    st.markdown("Connected to **Sentinel Core**.")
+    st.title("Scam Shield")
+    st.markdown("Connected to **Scam Shield Core**.")
     
     if st.button("➕ New Analysis", type="primary", use_container_width=True):
         create_new_chat()
         st.rerun()
 
     st.divider()
-    st.markdown("### 🗂️ Recent Scans")
+    st.markdown("### Recent Scans")
 
     for chat_id in reversed(list(st.session_state.all_chats.keys())):
         title = st.session_state.chat_titles.get(chat_id, "New Chat")
@@ -100,24 +94,21 @@ with st.sidebar:
         delete_current_chat()
         st.rerun()
 
-# --- 4. INITIALIZARE AGENT ---
 if "agent_initialized" not in st.session_state and BACKEND_LOADED:
     with st.spinner("Booting up AI Sentinel Core..."):
         initialize_agent()
     st.session_state.agent_initialized = True
 
-# --- 5. AFIȘARE ISTORIC ---
 for msg in current_messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"], unsafe_allow_html=True)
 
-# --- 6. LOGICA PENTRU IMAGINI ---
 if 'image_is_new' not in st.session_state:
     st.session_state['image_is_new'] = False
 if 'last_image_name' not in st.session_state:
     st.session_state['last_image_name'] = None
 
-uploaded_file = st.file_uploader("🖼️ Încarcă imaginea (pentru analiza AI/Deepfake):", 
+uploaded_file = st.file_uploader("Upload image:", 
                                  type=["png", "jpg", "jpeg"], 
                                  key="image_uploader")
 
@@ -139,18 +130,16 @@ if uploaded_file is not None and BACKEND_LOADED and st.session_state['image_is_n
         base64_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
         
     except Exception as e:
-        st.error(f"Eroare la redimensionare: {e}. Asigură-te că imaginea este validă.")
+        st.error(f"Error: {e}. Make sure the image is valid.")
         st.session_state['image_is_new'] = False
         st.rerun() 
         base64_image = None
         
     if base64_image:
-        # Mesajul trimis către Backend (trebuie ca backend-ul să știe să îl interpreteze!)
         special_agent_prompt = f"Analizează vizual Base64: {base64_image}" 
         
-        user_message_content = f"Imaginea **{uploaded_file.name}** a fost încărcată pentru analiză."
+        user_message_content = f"The image **{uploaded_file.name}** has been uploaded for analysis."
         
-        # --- FIX 1: Folosim active_chat_id, nu 'messages' ---
         st.session_state.all_chats[active_chat_id].append({"role": "user", "content": user_message_content})
         
         with st.chat_message("user"):
@@ -158,13 +147,12 @@ if uploaded_file is not None and BACKEND_LOADED and st.session_state['image_is_n
             st.image(original_image, caption=uploaded_file.name, width=250)
             
         with st.chat_message("assistant"):
-            with st.spinner("Analiză Multimodală în curs..."):
+            with st.spinner("Multimodal Analysis in Progress..."):
                 try:
                     full_response_text = run_scam_analyzer(special_agent_prompt)
                 except Exception as e:
-                    full_response_text = f"❌ Eroare Agent LLM: {e}"
+                    full_response_text = f"LLM Agent Error: {e}"
             
-            # --- FIX 2: Adăugăm logica de Culori și la Imagini ---
             header_html = ""
             text_for_search = full_response_text.lower()
             if re.search(r"verdict.*(?:high|critical|scam|phishing|dangerous|fake|generated)", text_for_search):
@@ -179,7 +167,6 @@ if uploaded_file is not None and BACKEND_LOADED and st.session_state['image_is_n
             
             st.markdown(full_response_text)
             
-            # --- FIX 3: Salvăm în chat-ul corect ---
             combined_response = f"{header_html}\n\n{full_response_text}"
             st.session_state.all_chats[active_chat_id].append({"role": "assistant", "content": combined_response})
             
@@ -188,33 +175,28 @@ if uploaded_file is not None and BACKEND_LOADED and st.session_state['image_is_n
         st.session_state['last_image_name'] = uploaded_file.name
         st.rerun()
 
-# --- 7. LOGICA PRINCIPALĂ (TEXT CHAT) ---
 if prompt := st.chat_input("Paste suspicious text here..."):
     
-    # A. Titlu Automat
     if len(current_messages) == 1:
         short_title = " ".join(prompt.split()[:4]) + "..."
         st.session_state.chat_titles[active_chat_id] = short_title
 
-    # B. Afișare User
     with st.chat_message("user"):
         st.markdown(prompt)
     st.session_state.all_chats[active_chat_id].append({"role": "user", "content": prompt})
 
-    # C. Procesare Backend
     with st.chat_message("assistant"):
-        with st.status("Sentinel is analyzing...", expanded=True) as status:
+        with st.status("Scam Shield is analyzing...", expanded=True) as status:
             st.write("⚙️ Classifying intent...")
             if BACKEND_LOADED:
                 try:
                     full_response_text = run_scam_analyzer(prompt)
                 except Exception as e:
-                    full_response_text = f"❌ Error: {e}"
+                    full_response_text = f"Error: {e}"
             else:
                 full_response_text = "Backend not loaded."
             status.update(label="Analysis Complete!", state="complete", expanded=False)
 
-        # Badge Logic
         header_html = ""
         text_for_search = full_response_text.lower()
         
@@ -235,7 +217,6 @@ if prompt := st.chat_input("Paste suspicious text here..."):
 
         st.write_stream(stream_data)
 
-    # D. Salvare
     combined_response = f"{header_html}\n\n{full_response_text}"
     st.session_state.all_chats[active_chat_id].append({"role": "assistant", "content": combined_response})
     

@@ -29,5 +29,5 @@ def classify_user_intent(user_input: str) -> str:
             return "GENERAL_KNOWLEDGE" 
 
     except Exception as e:
-        print(f"Eroare la rutarea intentiei (Fall-back la cunoștințe generale): {e}")
+        print(f"Intent Routing Error (Fall-back to General Knowledge): {e}")
         return "GENERAL_KNOWLEDGE"

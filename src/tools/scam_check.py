@@ -5,20 +5,12 @@ import tldextract
 import re
 
 def get_domain_age(text_input: str):
-    """
-    V2.0 - Abordare Robustă (Brute Force).
-    Scanează fiecare cuvânt să vadă dacă e domeniu, ignorând Regex-urile complexe.
-    """
-    
-    # 1. CURATAREA TEXTULUI
-    # Eliminăm caractere invizibile și facem split
     clean_text = text_input.replace('\u200b', ' ').replace('\xa0', ' ')
     words = clean_text.split()
     
     found_domain_obj = None
     clean_domain_str = ""
 
-    # 2. SCANAREA CUVINTELOR (Vânătoarea)
     for word in words:
         # Curățăm punctuația din jurul cuvântului (ex: "(google.com)" -> "google.com")
         candidate = word.strip(".,()[]{}<>\"'")
@@ -26,12 +18,10 @@ def get_domain_age(text_input: str):
         # Dacă e email (ex: a@b.com), luăm doar partea de după @
         if "@" in candidate:
             parts = candidate.split("@")
-            candidate = parts[-1] # b.com
+            candidate = parts[-1]
 
-        # Încercăm să extragem componentele
         extracted = tldextract.extract(candidate)
         
-        # CRITERIUL DE VALIDARE:
         # Un domeniu e valid dacă are Nume (domain) ȘI Extensie (suffix)
         # Ex: "google" (fara .com) -> Invalid
         # Ex: "google.com" -> Valid (domain=google, suffix=com)
@@ -40,11 +30,9 @@ def get_domain_age(text_input: str):
             clean_domain_str = f"{extracted.domain}.{extracted.suffix}"
             break # Am găsit primul domeniu, ne oprim (de obicei primul e cel important)
 
-    # Dacă după toată scanarea nu am găsit nimic
     if not found_domain_obj:
         return "SKIP: No valid domain found in text."
 
-    # 3. VERIFICARE TYPOSQUATTING (Brand Safety)
     suspicious_typos = {
         "gogle": "google",
         "googl": "google",
@@ -53,14 +41,13 @@ def get_domain_age(text_input: str):
         "mircosoft": "microsoft",
         "faceboook": "facebook",
         "net-flix": "netflix",
-        "careers-noreply": "google" # Caz special daca tldextract ia gresit subdomeniul
+        "careers-noreply": "google"
     }
     
     if found_domain_obj.domain in suspicious_typos:
         real_brand = suspicious_typos[found_domain_obj.domain]
         return f"CRITICAL: IMPOSTOR DOMAIN DETECTED! '{clean_domain_str}' is trying to impersonate '{real_brand}'. BLOCK IMMEDIATELY."
 
-    # 4. VERIFICAREA WHOIS
     try:
         domain_info = whois.whois(clean_domain_str)
     except Exception as err:
@@ -71,7 +58,6 @@ def get_domain_age(text_input: str):
     if not date:
         return f"SAFE (Assumption): Domain '{clean_domain_str}' is established (Hidden Date)."
 
-    # Normalizare data
     if isinstance(date, list):
         data_initiala = date[0]
     else:
@@ -84,7 +70,6 @@ def get_domain_age(text_input: str):
     delta = now_date - data_initiala
     days_active = delta.days
 
-    # 5. VERDICT FINAL
     if days_active < 30:
         return f"HIGH RISK: Domain '{clean_domain_str}' is FRESH! Created {days_active} days ago."
     elif days_active < 365:

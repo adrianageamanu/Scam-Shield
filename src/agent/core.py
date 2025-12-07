@@ -17,7 +17,6 @@ def initialize_agent():
 
 def run_scam_analyzer(user_input: str) -> str:
     
-    # 1. TRUNCHIERE PENTRU ROUTER
     if "Analizează vizual Base64:" in user_input:
         router_input = user_input[:50] 
     elif len(user_input) > 500:
@@ -25,24 +24,19 @@ def run_scam_analyzer(user_input: str) -> str:
     else:
         router_input = user_input
 
-    # 2. SALVARE ÎN MEMORIE
     GLOBAL_MEMORY.add_message("user", user_input)
     
-    # 3. CLASIFICARE INTENȚIE
     intent = classify_user_intent(router_input)
     messages_to_send = []
 
     try:
         final_response = ""
         
-        # ==============================================================================
-        # CAZUL 1: ANALIZĂ VIZUALĂ (IMAGINE)
-        # ==============================================================================
         if intent == "VISUAL_ANALYSIS":
             try:
                 base64_data = user_input.split('Base64: ')[-1].strip()
             except:
-                return "Eroare: Formatul imaginii este invalid sau corupt."
+                return "Error: invalid image format"
 
             try:
                 image_analysis_result = analyze_image(user_input)
@@ -70,7 +64,6 @@ def run_scam_analyzer(user_input: str) -> str:
                 f"INSTRUCTION: Provide the Verdict first, then list the specific visual anomalies found."
             )
             
-            # Payload Vision (fără istoric text vechi)
             messages_to_send = [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {
@@ -82,12 +75,8 @@ def run_scam_analyzer(user_input: str) -> str:
                 }
             ]
             
-            # GPT-4o obligatoriu pentru imagini
             model_to_use = "gpt-4o" 
 
-        # ==============================================================================
-        # CAZURILE TEXT (LINK, WEB, TEXT, CHAT)
-        # ==============================================================================
         else:
             model_to_use = LLM_MODEL
             messages_to_send = GLOBAL_MEMORY.get_messages()
@@ -95,12 +84,10 @@ def run_scam_analyzer(user_input: str) -> str:
             if intent == "LINK_ANALYSIS":
                 domain_result = get_domain_age(user_input)
                 
-                # Logică de Recuperare Context (Dacă nu e link în mesajul curent)
                 if "SKIP" in domain_result:
                     history = GLOBAL_MEMORY.get_messages()
                     found_prev_link = False
                     
-                    # Căutăm în spate în mesajele user-ului
                     for msg in reversed(history[:-1]):
                         if msg['role'] == 'user':
                             prev_result = get_domain_age(msg['content'])
@@ -109,14 +96,12 @@ def run_scam_analyzer(user_input: str) -> str:
                                 found_prev_link = True
                                 break
                     
-                    # Dacă tot nu am găsit link
                     if not found_prev_link:
                         fail_prompt = (
                             "\n\n[SYSTEM REPORT]: User asked to check a link, but NO URL was found in current or recent messages.\n"
                             "INSTRUCTION: Reply strictly stating you cannot find a link. Do NOT invent a verdict."
                         )
                         messages_to_send[-1]['content'] += fail_prompt
-                        # Scurtcircuităm execuția pentru a nu halucina un verdict
                         response = LLM_CLIENT.chat.completions.create(model=model_to_use, messages=messages_to_send).choices[0].message.content
                         GLOBAL_MEMORY.add_message("assistant", response)
                         return response
@@ -144,7 +129,7 @@ def run_scam_analyzer(user_input: str) -> str:
                 )
                 messages_to_send[-1]['content'] += prompt
             
-            else: # GENERAL_KNOWLEDGE
+            else:
                 rag_context = get_context(user_input)
                 rag_data_str = ""
                 if rag_context and "RAG ERROR" not in rag_context:
@@ -159,9 +144,6 @@ def run_scam_analyzer(user_input: str) -> str:
                 )
                 messages_to_send[-1]['content'] += hybrid_prompt
 
-        # ==============================================================================
-        # EXECUȚIA FINALĂ (APEL LLM)
-        # ==============================================================================
         response = LLM_CLIENT.chat.completions.create(
             model=model_to_use,
             messages=messages_to_send,
@@ -170,13 +152,9 @@ def run_scam_analyzer(user_input: str) -> str:
         
         final_response = response
         
-        # 5. CURĂȚARE MEMORIE (FIX-UL PENTRU EROAREA TA)
         if intent == "VISUAL_ANALYSIS":
-            # Obținem lista prin metoda oficială
             history_list = GLOBAL_MEMORY.get_messages()
             
-            # Modificăm ultimul element din listă (care e mesajul userului cu base64)
-            # Acesta se va reflecta în obiectul de memorie
             if history_list:
                 history_list[-1]["content"] = "[User uploaded an image for analysis]"
             

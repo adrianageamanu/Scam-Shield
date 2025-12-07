@@ -1,5 +1,3 @@
-# src/config.py
-
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -10,13 +8,10 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 def get_llm_client():
-    """
-    Returneaza instanta clientului OpenAI.
-    """
     if not OPENAI_API_KEY:
         raise ValueError(
-            "Eroare de configurare: Variabila OPENAI_API_KEY nu a fost gasita. "
-            "Verificati .env si setati cheia corecta."
+            "Configuration Error: The OPENAI_API_KEY variable was not found. "
+            "Verify the .env file and set the correct key."
         )
     
     try:
@@ -24,7 +19,7 @@ def get_llm_client():
          
         return client
     except APIError as e:
-        raise ConnectionError(f"Eroare la conectarea cu OpenAI API. Verifica cheia: {e}")
+        raise ConnectionError(f"Error connecting to the OpenAI API. Verify the key: {e}")
 
 LLM_CLIENT = get_llm_client()
 LLM_MODEL = "gpt-4o-mini"
