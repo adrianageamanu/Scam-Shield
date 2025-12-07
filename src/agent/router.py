@@ -2,6 +2,9 @@ from src.config import LLM_CLIENT, LLM_MODEL
 from src.prompts.system_prompts import ROUTER_PROMPT 
 
 def classify_user_intent(user_input: str) -> str:
+
+    if "Analizează vizual Base64:" in user_input:
+        return "VISUAL_ANALYSIS"
     
     VALID_INTENTS = ["LINK_ANALYSIS", "TEXT_ANALYSIS", "GENERAL_KNOWLEDGE", "VISUAL_ANALYSIS", "WEB_SEARCH"]
     
