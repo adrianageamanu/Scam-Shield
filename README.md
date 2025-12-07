@@ -137,7 +137,7 @@ Deterministic Python functions used to validate facts objectively.
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/your-username/Sentinel-AI.git](https://github.com/your-username/Sentinel-AI.git)
+    git clone [(https://github.com/adrianageamanu/Scam-Shield)](https://github.com/adrianageamanu/Scam-Shield)
     cd Sentinel-AI
     ```
 
