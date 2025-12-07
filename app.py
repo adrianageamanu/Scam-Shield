@@ -136,6 +136,10 @@ if uploaded_file is not None and BACKEND_LOADED and st.session_state['image_is_n
         base64_image = None
         
     if base64_image:
+
+        if len(st.session_state.all_chats[active_chat_id]) == 1:
+            st.session_state.chat_titles[active_chat_id] = "Verifying an Image if it's AI generated"
+
         special_agent_prompt = f"Analizează vizual Base64: {base64_image}" 
         
         user_message_content = f"The image **{uploaded_file.name}** has been uploaded for analysis."
