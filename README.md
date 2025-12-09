@@ -60,7 +60,7 @@ graph TD
 
 This section details the responsibility of each module in the system architecture.
 
-### 1. The Frontend (`Root`)
+### 1. The Frontend
 * **`app.py`**
     * **Role:** The User Interface (UI) built with Streamlit.
     * **Key Functions:**
